@@ -1,0 +1,155 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'jacoco'
+    id 'io.quarkus' version "${quarkusPluginVersion}"
+    // TODO (VPN): reactivar calidad / CI compartido
+    // id 'checkstyle'
+    // id 'maven-publish'
+    // id "com.societegenerale.commons.arch-unit-gradle-plugin" version "4.0.0"
+    // id 'org.sonarqube' version '6.0.1.5171'
+    // id 'org.barfuin.gradle.jacocolog' version '3.1.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+ext {
+    packagePath = mavenGroup
+    junitJupiter = '5.11.4'
+    // Umbrales bajos en scaffold; subirlos conforme crezca la cobertura.
+    jacocoClassMinCoverage = 0
+    jacocoMethodMinCoverage = 0
+    jacocoBranchMinCoverage = 0
+    jacocoLineMinCoverage = 0
+    jacocoInstructionMinCoverage = 0
+    jacocoComplexityMinCoverage = 0
+    coverageExclusions = [
+        "${basePackage.replace('.', '/')}/SuperAppApartadosApplication.class"
+    ]
+}
+
+group = packagePath
+description = appDescription
+
+// TODO (VPN): configuración compartida de CI (checkstyle, jacoco gates, arch-unit, etc.)
+// apply from: "https://gitlab.com/machtia/ci/config/-/raw/main/ci-config.gradle"
+
+configurations {
+    configureEach {
+        exclude module : 'junit-vintage-engine'
+        exclude module : 'quarkus-rest-jsonb'
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force 'org.testcontainers:testcontainers:2.0.3'
+    }
+}
+
+test {
+    minHeapSize = "512m"
+    maxHeapSize = "2g"
+    jacoco {
+        destinationFile = layout.buildDirectory.file("jacoco-quarkus.exec").get().asFile
+    }
+}
+
+// TODO (VPN): reactivar con ci-config
+// checkstyle {
+//     checkstyleMain.exclude '**/SuperAppApartadosApplication.java'
+// }
+//
+// archUnit {
+//     excludedPaths = []
+// }
+//
+// sonarqube {
+//     properties {
+//         property "sonar.coverage.exclusions", "**/SuperAppApartadosApplication.java"
+//     }
+// }
+
+repositories {
+    mavenCentral()
+
+    // TODO (VPN / Artifact Registry): librerías internas Liverpool
+    // maven {
+    //     url "artifactregistry://us-east4-maven.pkg.dev/sit-cicd-images-apps/liverpool-super-app-mvn-images-apps"
+    //     content {
+    //         includeGroup "com.liverpool.superapp"
+    //     }
+    // }
+    // mavenCentral {
+    //     content {
+    //         excludeGroup "com.liverpool.superapp"
+    //     }
+    // }
+}
+
+// TODO (VPN): limpiar repo.spring.io inyectado por ci-config y acotar Artifact Registry
+// afterEvaluate {
+//     repositories.removeIf { repo ->
+//         repo.url.toString().contains('repo.spring.io')
+//     }
+//
+//     repositories.configureEach { repo ->
+//         if (!repo.url.toString().contains('artifactregistry://') &&
+//             !repo.url.toString().contains('liverpool-super-app-mvn-images-apps')) {
+//             repo.content {
+//                 excludeGroup "com.liverpool.superapp"
+//             }
+//         }
+//     }
+// }
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+
+    // TODO (VPN / Artifact Registry): librerías internas Liverpool
+    // implementation 'com.liverpool.superapp:core-utils:1.10.0'
+    // implementation 'com.liverpool.superapp:security-utils:1.3.0'
+
+    // REST y JSON
+    implementation 'io.quarkus:quarkus-smallrye-health'
+    implementation 'io.quarkiverse.resteasy-problem:quarkus-resteasy-problem:3.21.1'
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+    implementation 'io.quarkus:quarkus-rest-client-jackson'
+    implementation 'io.quarkus:quarkus-smallrye-context-propagation'
+
+    // OpenAPI/Swagger
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+
+    // Validación
+    implementation 'io.quarkus:quarkus-hibernate-validator'
+
+    // Seguridad y JWT (extensiones Quarkus; sin security-utils de Liverpool por ahora)
+    implementation 'io.quarkus:quarkus-security'
+    implementation 'io.quarkus:quarkus-smallrye-jwt'
+
+    // MongoDB
+    implementation("io.quarkus:quarkus-mongodb-panache")
+    implementation("io.quarkiverse.mongock:quarkus-mongock:0.6.0")
+
+    // Testing
+    // TODO (VPN / Artifact Registry)
+    // testImplementation 'com.liverpool.superapp:security-test-utils:1.1.0'
+    testImplementation 'io.quarkus:quarkus-test-security'
+    testImplementation('io.quarkus:quarkus-junit5')
+    testImplementation('io.quarkus:quarkus-junit5-mockito')
+    testImplementation("io.quarkus:quarkus-jacoco")
+    testImplementation("io.quarkus:quarkus-test-oidc-server")
+    testImplementation('io.rest-assured:rest-assured')
+    testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testImplementation('org.junit.jupiter:junit-jupiter-engine')
+    testImplementation('org.testcontainers:testcontainers')
+    testImplementation('org.testcontainers:mongodb')
+    testImplementation('io.quarkiverse.wiremock:quarkus-wiremock-test:1.4.1')
+    testImplementation("org.skyscreamer:jsonassert:1.5.3")
+    testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:3.2.7'
+}

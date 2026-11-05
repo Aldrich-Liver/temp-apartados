@@ -1,0 +1,44 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    plugins {
+        id "${quarkusPluginId}" version "${quarkusPluginVersion}"
+    }
+}
+
+// TODO (VPN / Artifact Registry): plugin de autenticación a Artifact Registry
+// buildscript {
+//     repositories {
+//         maven {
+//             url "https://plugins.gradle.org/m2/"
+//         }
+//     }
+//     dependencies {
+//         classpath "gradle.plugin.com.google.cloud.artifactregistry:artifactregistry-gradle-plugin:2.2.0"
+//     }
+// }
+// apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
+//
+// // Configure Artifact Registry authentication
+// // In CI/CD: uses ARTIFACTREGISTRY_TOKEN env var if set
+// // In local dev: uses gcloud auth (plugin default)
+// gradle.projectsLoaded {
+//     def token = System.getenv('ARTIFACTREGISTRY_TOKEN')
+//     if (token) {
+//         gradle.allprojects { project ->
+//             project.repositories.configureEach { repo ->
+//                 if (repo.url?.toString()?.contains('artifactregistry://')) {
+//                     repo.credentials {
+//                         username = 'oauth2accesstoken'
+//                         password = token
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
+// Nombre Gradle del artefacto (p. ej. super-app-apartados). Definido en gradle.properties.
+rootProject.name = appName
